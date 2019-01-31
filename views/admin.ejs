@@ -2,6 +2,8 @@
 
 <head>
     <% include partials/head.ejs %>
+<link rel="stylesheet" href="stylesheets/style.css">
+    
 </head>
 
 <body>
@@ -11,14 +13,23 @@
         Upload List
     </div><br />
     <form method="post" class="container" enctype="multipart/form-data" action="/upload">
-        <div class="row"><input type="file" class="btn" id="thumbnail" name="thumbnail" onchange="fileSelected();"
-                multiple><br>
+        <div class="row">
+            <label>room_list</label>
+            <input type="file" class="btn" id="room_list" name="room_list" onchange="fileSelected('room_list');" required/>
             <div id="filename"></div>
-            <div id="filesize"></div> <br>
+        </div>
+        <div class="row">
+            <label>teacher_list</label>
+            <input type="file" class="btn" id="teacher_list" name="teacher_list" onchange="fileSelected('teacher_list');" required/>
+            <div id="filename"></div>
+        </div>
+        <div class="row">
+            <label>schedule_list</label>
+            <input type="file" class="btn" id="schedule_list" name="schedule_list" onchange="fileSelected('schedule_list');" required/>
+            <div id="filename"></div>
         </div>
         <div class="row text-center">
             <input type="button" class="btn btn-lg btn-primary" onclick="uploadFile()" value="Upload">
-            <input type="submit" class="btn btn-lg btn-primary"  value="Upload">
         </div><br>
         <div class="container">
             <div class="progress">
@@ -29,12 +40,17 @@
             </div>
         </div>
     </form>
+    <div id="message"></div>
     <script>
-        function fileSelected() {
-            var files = document.getElementById('thumbnail').files;
-            document.getElementById('filename').innerHTML = '';
-            for (x = 0; x < files.length; x++) {
-                file = files[x]
+        function fileSelected(id) {
+            console.log(id);
+
+            var files = document.getElementById(id);
+            files.nextElementSibling.innerHTML = '';
+            console.log(files.nextElementSibling);
+
+            for (x = 0; x < files.files.length; x++) {
+                file = files.files[x]
                 if (file) {
                     var filesize = 0;
                     if (file.size > 1024 * 1024) {
@@ -43,19 +59,23 @@
                     else {
                         filesize = (Math.round(file.size * 100 / 1024) / 100).toString() + 'KB';
                     }
-                    document.getElementById('filename').innerHTML += 'Name:' + file.name + "<br/>Size:" + filesize + "<br/>";
+                    files.nextElementSibling.innerHTML += 'Name:' + file.name + "<br/>Size:" + filesize + "<br/>";
 
                 }
             }
         }
         function uploadFile() {
             var fd = new FormData();
-            var ins = document.getElementById('thumbnail').files;
-            console.log(ins[0]);
-            
-            for (var x = 0; x < ins.length; x++) {
-                fd.append("thumbnail", document.getElementById('thumbnail').files[x].data);
+            var ins1 = document.getElementById('room_list').files[0];
+            var ins2 = document.getElementById('teacher_list').files[0];
+            var ins3 = document.getElementById('schedule_list').files[0];
+            if(!(ins1&&ins2&&ins3)){
+                alert('Select all files!');
+                return;
             }
+            fd.append("room_list", ins1);
+            fd.append("teacher_list", ins2);
+            fd.append("schedule_list", ins3);
             var xhr = new XMLHttpRequest();
             xhr.upload.addEventListener("progress", uploadProgress, false);
             xhr.addEventListener("load", uploadComplete, false);
@@ -76,7 +96,23 @@
         }
         function uploadComplete(evt) {
             /* This event is raised when the server send back a response */
-            alert(evt.target.responseText);
+            // alert(evt.target.responseText);
+            document.getElementById('message').innerHTML += '<h6>' + evt.target.responseText + '</h6>';
+            $.ajax({
+                url: "/start",
+                method:"POST",
+                beforeSend:()=>{
+                    document.getElementById('message').innerHTML += '<h6> Generating Schedule.. </h6>';  
+                },
+                success: function (result) {
+                    document.getElementById('message').innerHTML += '<h6> Completed </h6>';  
+                },
+                error:(err)=>{
+                    console.log(err);
+                    
+                    document.getElementById('message').innerHTML += '<h1> Error : '+err.responseText+'</h1>';  
+                }
+            });
         }
 
         function uploadFailed(evt) {
