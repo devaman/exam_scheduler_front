@@ -3,7 +3,7 @@ var authenticated_using = require('../helpers/authenticated_using')
 var multer = require('multer');
 var storage = multer.diskStorage({
     destination: function (req, file, cb) {
-        var dest = __dirname + '/../../public/uploads/';
+        var dest = __dirname + '/../../uploads/';
         cb(null, dest);
     },
     filename: function (req, file, cb) {
